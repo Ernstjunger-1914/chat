@@ -1,9 +1,9 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './App.css';
-import Join from './components/Join';
-import Chat from './components/Chat';
-import NotFound from './components/404';
+import Join from './components/Join/Join';
+import Chat from './components/Chat/Chat';
+import NotFound from './components/Error/404';
 
 function App() {
   return (
