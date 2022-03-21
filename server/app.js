@@ -29,6 +29,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
+io.on('connection', (socket)=> {
+  console.log(`socket 연결 성공`);
+
+  socket.on('disconnect', ()=> {
+    console.log("사용자가 퇴장했습니다.");
+  })
+})
+
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));
@@ -43,6 +51,10 @@ app.use(function(err, req, res, next) {
   // render the error page
   res.status(err.status || 500);
   res.render('error');
+});
+
+app.listen(PORT, ()=> {
+  console.log(`Server has running on port ${PORT}`);
 });
 
 module.exports = app;
