@@ -1,3 +1,5 @@
+'use strict';
+
 const createError = require('http-errors');
 const express = require('express');
 const path = require('path');
@@ -6,6 +8,7 @@ const logger = require('morgan');
 const cors = require('cors');
 const http = require('http');
 const socketio = require('socket.io');
+const { addUser, removeUser, getUser, getUsersInRoom } = require('./models/user');
 
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
@@ -29,13 +32,32 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
-io.on('connection', (socket)=> {
-  console.log(`socket 연결 성공`);
+io.on('connect', (socket)=> {
+  socket.on('join', ({ name, room }, callback) => {
+    const { err, user } = addUser({ id: socket.id, name, room });
 
-  socket.on('disconnect', ()=> {
-    console.log("사용자가 퇴장했습니다.");
-  })
-})
+    if(err) {
+      return callback(err);
+    }
+
+    socket.join(user.room);
+    socket.emit('message', { user: 'admin', text: `${user.name}님, ${user.room} 채팅방에 오신 것을 환영합니다.` });
+    socket.broadcast.to(user.room).emit('message', { user: 'admin', text: `${user.name}님이 입장했습니다.` });
+
+    io.to(user.room).emit('roomData', { room: user.room, user: getUsersInRoom(user.room) });
+
+    callback();
+  });
+
+  socket.on('disconnect', () => {
+    const user = removeUser(socket.id);
+
+    if(user) {
+      io.to(user.room).emit('message', { user: 'admin', text: `${user.name}님이 퇴장했습니다.` });
+      io.to(user.room).emit('roomData', { room: user.room, users: getUsersInRoom(user.room) });
+    }
+  });
+});
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
