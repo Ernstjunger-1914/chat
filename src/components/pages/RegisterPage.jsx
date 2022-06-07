@@ -1,9 +1,14 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 
 function RegisterPage() {
-    const { register, watch, errors, handleSubmit }= useForm(); 
+    const { register, watch, errors, handleSubmit }= useForm();
+    const [loading, setLoading] = useState(false);
+
+    const password = useRef();
+    password.current = watch("password");
 
     return (
         <RegisterDiv>
@@ -15,7 +20,7 @@ function RegisterPage() {
                 <Input 
                     name='email'
                     type='email'
-                    ref={register({ required: true, pattern: /^\S+@\S+$/i })}
+                    {...register("email", { required: true, pattern: /^\S+@\S+$/i })}
                 />
                 {
                     errors.email &&
@@ -24,12 +29,40 @@ function RegisterPage() {
 
                 <Label>아이디</Label>
                 <Input
-                    name='name'
-                    ref={register({ required: true, maxLength: 15 })}
+                    name='id'
+                    {...register("id", { required: true, maxLength: 15 })}
                 />
+                {
+                    errors.id &&
+                    errors.id.type === "required" &&
+                    <p>아이디 입력은 필수입니다.</p>
+                }
+                {
+                    errors.id &&
+                    errors.id.type === "maxLength" &&
+                    <p>아이디가 최대 길이를 초과했습니다.</p>
+                }
 
                 <Label>비밀번호</Label>
-                
+                <Input
+                    name='password'
+                    type='password'
+                    {...register("password", { required: true, minLength: 8 })}
+                />
+
+                <Label>비밀번호 확인</Label>
+                <Input
+                    name='password_confirm'
+                    type='password'
+                    {...register("password_confirm", {
+                        required: true,
+            
+                        validate: (value) => value === password.current,
+                    })}
+                />
+
+                <Input type='submit' disabled={loading} />
+                <Link style={{ color: 'gray', textDecoration: 'none' }} to='login'>이미 계정이 존재한다면</Link>
             </Form>
         </RegisterDiv>
     );
